@@ -1,0 +1,30 @@
+{
+  "accounts": {
+    "dana@rowanplumbing.example": {
+      "name": "Dana Whitfield",
+      "company": "Rowan Plumbing",
+      "plan": "Crew",
+      "technicians": 4,
+      "notification_email": "dana@rowanplumbing.example"
+    },
+    "marcus@vetterelectric.example": {
+      "name": "Marcus Vetter",
+      "company": "Vetter Electric",
+      "plan": "Fleet",
+      "technicians": 9,
+      "notification_email": "office@vetterelectric.example"
+    },
+    "priya@summitair.example": {
+      "name": "Priya Chandran",
+      "company": "Summit Air & Heating",
+      "plan": "Starter",
+      "technicians": 2,
+      "notification_email": "priya@summitair.example"
+    }
+  },
+  "invoices": [
+    { "number": 1042, "account": "dana@rowanplumbing.example", "amount": 236.0, "status": "paid", "date": "2026-06-01" },
+    { "number": 2208, "account": "marcus@vetterelectric.example", "amount": 801.0, "status": "open", "date": "2026-07-01" },
+    { "number": "1042A", "account": "dana@rowanplumbing.example", "amount": 267.0, "status": "overdue", "date": "2025-11-01", "legacy": true }
+  ]
+}

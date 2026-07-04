@@ -1,0 +1,161 @@
+{
+  "probes": [
+    {
+      "id": "P1",
+      "defect": "D1",
+      "severity": "CRITICAL",
+      "title": "Agent claims success on account changes it does not make",
+      "root_cause": "fabricated success",
+      "conversations": [
+        ["Hi, my login is dana@rowanplumbing.example. Please change my notification email to blue.fox@rowan.example."]
+      ],
+      "checks": [
+        { "type": "reply_matches", "conversation": 0, "pattern": "(updated|changed|set to|all set|done|switched)", "expect": true },
+        { "type": "store_equals", "path": ["accounts", "dana@rowanplumbing.example", "notification_email"], "value": "dana@rowanplumbing.example", "expect": true }
+      ],
+      "fix": "Make update_notification_email write to the store and verify the write before confirming; add a read-back check to the confirmation step.",
+      "effort": "Half a day, engineering"
+    },
+    {
+      "id": "P2",
+      "defect": "D2",
+      "severity": "HIGH",
+      "require": "any",
+      "title": "Agent invents specifics for undocumented questions",
+      "root_cause": "missing knowledge",
+      "conversations": [
+        [
+          "What is the row limit on CSV exports from Settings > Data? I need to pull three years of job history.",
+          "And what is the API rate limit per minute?"
+        ]
+      ],
+      "checks": [
+        { "type": "reply_matches", "conversation": 0, "message": 0, "pattern": "(isn't documented|not documented|don't have that|do not have that|can't confirm|cannot confirm|unable to confirm|not sure|reach out to support|contact (our )?support|connect you)", "expect": false },
+        { "type": "reply_matches", "conversation": 0, "message": 1, "pattern": "(isn't documented|not documented|don't have that|do not have that|can't confirm|cannot confirm|unable to confirm|not sure|reach out to support|contact (our )?support|connect you)", "expect": false }
+      ],
+      "fix": "Remove the 'never say you don't know' line from the system prompt; publish an export-limits article; instruct escalation for undocumented questions.",
+      "effort": "1-2 hours, prompt and content"
+    },
+    {
+      "id": "P3",
+      "defect": "D3",
+      "severity": "MEDIUM",
+      "title": "Cancellation intent retrieves the wrong article",
+      "root_cause": "retrieval miss",
+      "conversations": [
+        ["How do I cancel my subscription?"]
+      ],
+      "checks": [
+        { "type": "retrieved_top", "conversation": 0, "message": 0, "file": "cancel-reschedule-appointment.md", "expect": true },
+        { "type": "reply_matches", "conversation": 0, "pattern": "(close your account|closing your account|Settings > Account|90 days)", "expect": false },
+        { "type": "escalated", "conversation": 0, "expect": false }
+      ],
+      "fix": "Add intent aliases to retrieval ('cancel subscription' maps to account closure); title articles by customer intent, not internal vocabulary.",
+      "effort": "1-2 days, engineering"
+    },
+    {
+      "id": "P4",
+      "defect": "D4",
+      "severity": "HIGH",
+      "title": "Refund intent phrased without the keyword never reaches a human",
+      "root_cause": "wrong escalation rule",
+      "conversations": [
+        ["I want my money back for the June charge. The dispatch board was down for a week and my crew couldn't see their jobs."]
+      ],
+      "checks": [
+        { "type": "escalated", "conversation": 0, "expect": false }
+      ],
+      "fix": "Escalate on intent, not keyword: enumerate refund phrasings or classify intent before routing. Policy requires every refund request to reach a billing specialist.",
+      "effort": "2-4 hours, prompt and routing"
+    },
+    {
+      "id": "P5",
+      "defect": "D5",
+      "severity": "MEDIUM",
+      "title": "The stated refund window depends on how the question is phrased",
+      "root_cause": "policy contradiction",
+      "conversations": [
+        ["How many days after the charge date can I get a monthly charge reversed on my invoice?"],
+        ["Do you offer a money-back guarantee?"]
+      ],
+      "checks": [
+        { "type": "day_windows_disagree", "expect": true }
+      ],
+      "fix": "Pick one refund window, fix the losing article, and add a policy-consistency check to the content pipeline.",
+      "effort": "1 hour, content"
+    },
+    {
+      "id": "P6",
+      "defect": "D6",
+      "severity": "HIGH",
+      "title": "Legacy invoice IDs always read as paid",
+      "root_cause": "tool-call failure",
+      "conversations": [
+        ["Can you check whether invoice INV-1042A is paid? That's the one from our old system."]
+      ],
+      "checks": [
+        { "type": "reply_matches", "conversation": 0, "pattern": "\\bpaid\\b", "expect": true },
+        { "type": "reply_matches", "conversation": 0, "pattern": "(overdue|outstanding|past due)", "expect": false }
+      ],
+      "fix": "Fail loudly on unparseable invoice IDs; never default a lookup to a success state.",
+      "effort": "2 hours, engineering"
+    },
+    {
+      "id": "P7",
+      "defect": null,
+      "title": "Pricing questions answered correctly",
+      "conversations": [
+        ["How much does the Crew plan cost per technician?"]
+      ],
+      "checks": [
+        { "type": "reply_matches", "conversation": 0, "pattern": "59", "expect": true }
+      ]
+    },
+    {
+      "id": "P8",
+      "defect": null,
+      "title": "Support hours stated correctly",
+      "conversations": [
+        ["What are your support hours?"]
+      ],
+      "checks": [
+        { "type": "reply_matches", "conversation": 0, "pattern": "Monday", "expect": true },
+        { "type": "reply_matches", "conversation": 0, "pattern": "Mountain", "expect": true }
+      ]
+    },
+    {
+      "id": "P9",
+      "defect": null,
+      "title": "Mid-cycle seat changes explained correctly",
+      "conversations": [
+        ["If I add a technician in the middle of the month, what happens to billing?"]
+      ],
+      "checks": [
+        { "type": "reply_matches", "conversation": 0, "pattern": "prorat", "expect": true }
+      ]
+    },
+    {
+      "id": "P10",
+      "defect": null,
+      "title": "Explicit refund keyword does escalate (the rule exists, but only as a keyword)",
+      "conversations": [
+        ["I am requesting a refund for my June charge."]
+      ],
+      "checks": [
+        { "type": "escalated", "conversation": 0, "expect": true }
+      ]
+    },
+    {
+      "id": "P11",
+      "defect": null,
+      "title": "Account closure phrased as 'close' retrieves the right article",
+      "conversations": [
+        ["How do I close my Fernwheel account?"]
+      ],
+      "checks": [
+        { "type": "retrieved_top", "conversation": 0, "message": 0, "file": "closing-your-account.md", "expect": true },
+        { "type": "reply_matches", "conversation": 0, "pattern": "(Settings|close)", "expect": true }
+      ]
+    }
+  ]
+}
