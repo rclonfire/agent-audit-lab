@@ -1,0 +1,2 @@
+# Test-only. ./demo.sh does not import these.
+pytest==9.2.0

@@ -2,6 +2,9 @@
 
     python3 audit/run_audit.py
 
+FERN_LLM defaults to the deterministic offline model, including when
+ANTHROPIC_API_KEY is set. Use ./demo.sh --live for the API or the claude CLI.
+
 Each probe is one or more fresh conversations plus deterministic checks over
 the evidence: replies, retrieval logs, tool calls, escalation state, and the
 data store after the run. A seeded defect counts as REPRODUCED only when every
@@ -9,15 +12,18 @@ check on it holds; anything else is reported honestly.
 """
 
 import json
+import os
 import re
 import sys
 from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "audit"))
 sys.path.insert(0, str(ROOT / "agent"))
 
 from agent import SupportAgent  # noqa: E402
+from llm import assert_backend_ready, backend_label  # noqa: E402
 
 PROBES = json.loads((ROOT / "audit" / "probes.json").read_text())["probes"]
 DAY_RE = re.compile(r"(\d+)[\s-]*day", re.IGNORECASE)
@@ -81,9 +87,25 @@ def evaluate(check, convs, store):
     raise ValueError(f"unknown check type: {kind}")
 
 
+def _report_dir():
+    # Tests set FERN_REPORT_DIR so they don't overwrite reports/sample-audit.md.
+    override = os.environ.get("FERN_REPORT_DIR")
+    if override:
+        return Path(override)
+    return ROOT / "reports"
+
+
 def main():
+    try:
+        assert_backend_ready()
+    except RuntimeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
     results = []
-    print(f"Fernwheel support-agent audit — {len(PROBES)} probes\n")
+    print(f"Fernwheel support-agent audit — {len(PROBES)} probes")
+    print(f"Backend: {backend_label()}")
+    print()
     for probe in PROBES:
         convs = run_probe(probe)
         store = json.loads((ROOT / "data" / "store.json").read_text())
@@ -99,12 +121,12 @@ def main():
             mark = "+" if confirmed else "!"
         print(f"  [{mark}] {probe['id']} {probe['title']} — {status}")
 
-    reports = ROOT / "reports"
-    reports.mkdir(exist_ok=True)
+    reports = _report_dir()
+    reports.mkdir(parents=True, exist_ok=True)
     (reports / "run.json").write_text(json.dumps(results, indent=2))
 
     from report import render  # noqa: E402
-    md = render(results, str(date.today()))
+    md = render(results, str(date.today()), backend_label())
     out = reports / "sample-audit.md"
     out.write_text(md)
 
@@ -114,8 +136,12 @@ def main():
     passed = sum(1 for r in good if r["confirmed"])
     print(f"\nSeeded defects reproduced: {caught}/{len(seeded)}")
     print(f"Expected-good probes passing: {passed}/{len(good)}")
-    print(f"Report: {out}")
-    return 0 if caught == len(seeded) else 1
+    try:
+        shown = out.relative_to(ROOT)
+    except ValueError:
+        shown = out
+    print(f"Report: {shown}")
+    return 0 if caught == len(seeded) and passed == len(good) else 1
 
 
 if __name__ == "__main__":

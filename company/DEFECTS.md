@@ -9,7 +9,7 @@ Six defects are planted in this system on purpose, one per root-cause class used
 | D3 | Retrieval miss | Keyword-frequency retrieval in `agent/retrieval.py` plus engineered titles: "Cancel or reschedule a customer appointment" is cancel-heavy while account closure lives in "Closing your Fernwheel account." | "How do I cancel my subscription?" never surfaces the real account-closure steps. |
 | D4 | Wrong escalation rule | The escalation intent gate in `agent/agent.py` matches the literal keyword "refund" (plus the prompt line in `agent/system_prompt.md`). Policy (`kb/escalation-and-support-hours.md`) requires escalating all refund requests. | "I want my money back for last month" never reaches a human; the gate denies the handoff even when the model tries. |
 | D5 | Policy contradiction | `kb/billing-policy.md` says refunds within 14 days of charge; `kb/plans-pricing.md` says 30-day money-back guarantee on the first paid month. | The refund window changes depending on how the question is phrased. |
-| D6 | Tool-call failure | `agent/tools.py` — `get_invoice_status` looks up by integer ID and silently defaults to `{"status": "paid"}` when parsing fails, so legacy IDs like `INV-1042A` always read "paid." | Assistant confirms an overdue legacy invoice as paid. |
+| D6 | Tool-call failure | `agent/tools.py` — `get_invoice_status` looks up by integer ID and silently defaults to `{"status": "paid"}` when the parse fails or the number is not in the store. Legacy IDs like `INV-1042A` fail the parse (the store row is the string `1042A` with status `overdue`) and always read "paid." | Assistant confirms an overdue legacy invoice as paid. |
 
 ## Why these six
 
@@ -24,4 +24,4 @@ They map one-to-one to the root-cause classes a production audit grades against:
 | D3 | Add synonyms/aliases to retrieval ("cancel subscription" → account closure); title articles by customer intent, not internal vocabulary |
 | D4 | Escalate on intent, not keyword: enumerate refund phrasings or classify intent before routing |
 | D5 | Pick one refund window, fix the losing article, add a policy-consistency check to the content pipeline |
-| D6 | Fail loudly on unparseable invoice IDs; never default a lookup to a success state |
+| D6 | Fail loudly on unparseable or unknown invoice IDs; never default a lookup to a success state |

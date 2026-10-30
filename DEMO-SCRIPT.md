@@ -1,6 +1,6 @@
 # Recording script — 5-8 minutes
 
-One take, terminal maximized, font large. Two windows: a terminal and the report file. Total speaking pace: unhurried; the audit run has natural pauses while probes execute.
+`python3 agent/chat.py` and `./demo.sh` use the deterministic offline model and need no API key. Pass `--live` only when you are recording against the Anthropic API or the local `claude` CLI. One take, terminal maximized, font large. Two windows: a terminal and the report file. Total speaking pace: unhurried; the audit run has natural pauses while probes execute.
 
 ## 0:00 — Setup (say over the repo README)
 
