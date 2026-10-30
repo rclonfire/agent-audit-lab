@@ -6,6 +6,12 @@ Fernwheel is a fictional field-service company with a small support agent, a 14-
 
 That GIF is an [asciinema](https://asciinema.org/) recording of `./demo.sh`, rendered with [agg](https://github.com/asciinema/agg). Playback is slowed so each line can be read; the text is the program's output. `docs/demo.cast` is the cast. `scripts/record_demo.sh` rebuilds both files and is not part of the demo.
 
+## Portfolio
+
+This repo is a portfolio piece: a tool for auditing an AI support agent. It ships Fernwheel's agent with six defects seeded in the application code and the docs. The audit harness probes that agent with 11 scripted conversations and writes a report that cites the reply, the tool calls, and the articles retrieval actually returned. `./demo.sh` runs the audit end to end with no API key and exits 0 when all 6 seeded defects are reproduced and all 5 expected-good probes pass. GitHub Actions runs the tests and that demo on Python 3.10 and 3.12 for every push and pull request. The keyless backend is a scripted stand-in, not a real model. It follows the retrieved articles and the real tools, including the seeded mistakes.
+
+An agent can look fine in a casual demo and still confirm a change it did not make, quote the wrong refund window, or hand a cancellation question the wrong article. Anyone shipping an agent to customers has that gap. The lab probes a known agent on purpose and keeps the evidence.
+
 ## Quickstart
 
 Python 3.10 or newer. The demo does not install anything.
