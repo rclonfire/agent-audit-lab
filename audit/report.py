@@ -7,7 +7,7 @@ def _transcript(conv):
     lines = []
     for i, msg in enumerate(conv["messages"]):
         lines.append(f"> **Customer:** {msg}")
-        tool_lines = []
+        evidence = []
         started = False
         for ev in conv["events"]:
             if ev["type"] == "user" and ev["text"] == msg:
@@ -15,16 +15,21 @@ def _transcript(conv):
                 continue
             if started and ev["type"] == "user":
                 break
+            if started and ev["type"] == "retrieval":
+                files = ", ".join(
+                    f"{f['file']} ({f['score']})" for f in ev["files"]
+                ) or "none"
+                evidence.append(f"> *retrieved:* {files}")
             if started and ev["type"] == "tool_call":
-                tool_lines.append(
+                evidence.append(
                     f"> *tool:* `{ev['tool']}({ev['args']})` → `{ev['result']}`")
-        lines.extend(tool_lines)
+        lines.extend(evidence)
         if i < len(conv["replies"]):
             lines.append(f"> **Fern:** {conv['replies'][i]}")
     return "\n>\n".join(lines)
 
 
-def render(results, run_date):
+def render(results, run_date, backend="unspecified"):
     seeded = sorted(
         (r for r in results if r["probe"]["defect"]),
         key=lambda r: SEVERITY_ORDER.get(r["probe"].get("severity", "LOW"), 9),
@@ -35,17 +40,18 @@ def render(results, run_date):
     out = []
     out.append("# AI Support Agent Audit — Fernwheel (demo)")
     out.append("")
-    out.append(f"Prepared from a scripted probe run on {run_date}. Fernwheel is a "
-               "fictional company; every defect below was seeded on purpose and "
-               "then caught by the same probe method used on production agents. "
+    out.append(f"Prepared from a scripted probe run on {run_date}. "
+               f"Model backend: {backend}. Fernwheel is a fictional company; "
+               "every defect below was seeded on purpose and then checked by "
+               "the probe suite in this repository. "
                "See `company/DEFECTS.md` for the seed map.")
     out.append("")
     out.append("## 1. Scope and method")
     out.append("")
-    out.append(f"Surface tested: chat. {n_convs} scripted conversations on "
-               f"{run_date}, persona: small trades-business owner on the Crew plan. "
-               "Every finding cites the exact prompt sequence, the agent's reply, "
-               "and the tool or retrieval evidence behind it.")
+    out.append(f"Surface tested: the local chat agent in this repository. "
+               f"{n_convs} scripted conversations on {run_date}. "
+               "Every finding cites the prompt, the agent's reply, and the "
+               "tool or retrieval evidence behind it.")
     out.append("")
     out.append("## 2. Findings, ranked by customer impact")
 

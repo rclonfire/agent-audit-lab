@@ -48,7 +48,8 @@ def get_account(email: str):
 def get_invoice_status(invoice_id: str):
     store = _load()
     # Seeded defect D6: integer parse with a success default. Legacy IDs like
-    # INV-1042A fail the parse and silently read as paid. See company/DEFECTS.md.
+    # INV-1042A fail the parse and silently read as paid. An ID that parses
+    # but is not in the store takes the same success default. See DEFECTS.md.
     try:
         num = int(str(invoice_id).strip().upper().replace("INV-", ""))
     except ValueError:

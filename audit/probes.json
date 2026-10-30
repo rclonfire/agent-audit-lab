@@ -97,7 +97,7 @@
         { "type": "reply_matches", "conversation": 0, "pattern": "\\bpaid\\b", "expect": true },
         { "type": "reply_matches", "conversation": 0, "pattern": "(overdue|outstanding|past due)", "expect": false }
       ],
-      "fix": "Fail loudly on unparseable invoice IDs; never default a lookup to a success state.",
+      "fix": "Fail loudly on unparseable or unknown invoice IDs; never default a lookup to a success state.",
       "effort": "2 hours, engineering"
     },
     {
